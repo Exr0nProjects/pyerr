@@ -1,5 +1,5 @@
 import pandas as pd
-from matplotlib import pyplot as plt
+
 import numpy as np
 
 from ErrorProp import ErroredValue as EV
@@ -22,20 +22,14 @@ if __name__ == '__main__':
     from operator import itemgetter # https://stackoverflow.com/a/52083390/10372825
     meta, data, background = itemgetter('meta', 'data', 'background')(get())
     # get std dev with sqrt
-    with_errors = data.apply(lambda row: {
-        'cm':      row['inches']*CM_PER_INCH,
-        'seconds': row['seconds'],
-        'counts':  EV(row['counts'], row['counts']**0.5)
-    }, axis=1)
+    corrected_data = data
+    corrected_data["counts"] = data.apply(lambda row: EV(row['counts'], row['counts']**0.5), axis=1)
+    corrected_data["cm"] = data.apply(lambda row: row["inches"]*CM_PER_INCH, axis=1)
 
-    print(type(with_errors))
 
-    deadtime_corrected = with_errors.apply(lambda row: {
-        'cm': row['cm'],
-        'seconds': row['seconds'],
-        'counts': row['counts']/(1-(row['counts']/MAX_COUNTRATE))
-    }, axis=1)
+    corrected_data["counts"] = data.apply(lambda row: row['counts']/(1-(row['counts']/MAX_COUNTRATE)), axis=1)
 
-    print(deadtime_corrected)
+    print(corrected_data)
+    breakpoint()
 
 

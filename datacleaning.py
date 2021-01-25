@@ -16,6 +16,7 @@ def globit(filepath):
         background = {"seconds": df_raw.iloc[clean_row-2, 1], "counts": df_raw.iloc[clean_row-2, 2]}
         df_cleaned = df_raw.iloc[0:clean_row-2, 0:3]
         df_cleaned = df_cleaned.apply(pd.to_numeric, errors='coerce')
+        breakpoint()
         dataframes.append({"meta":experimentType, "data": df_cleaned, "background": background})
 
     return dataframes
