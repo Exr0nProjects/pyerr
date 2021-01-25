@@ -3,7 +3,7 @@ class ErroredValue(object):
         self.value = value
         self.delta = delta
 
-    def __add__(self, o): 
+    def __add__(self, o):
         if type(o) == ErroredValue:
             return ErroredValue((self.value+o.value), (((self.delta**2) + (o.delta**2))**0.5))
         else:
@@ -32,8 +32,4 @@ class ErroredValue(object):
 
     def __repr__(self):
         return f'<ErroredValue {self.value}±{self.delta:.2f} at {hex(id(self))}>'
-
-
-
-
 
