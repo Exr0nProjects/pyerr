@@ -22,14 +22,13 @@ if __name__ == '__main__':
     from operator import itemgetter # https://stackoverflow.com/a/52083390/10372825
     meta, data, background = itemgetter('meta', 'data', 'background')(get())
     # get std dev with sqrt
-    corrected_data = data
+    corrected_data = pd.DataFrame.copy(data)
     corrected_data["counts"] = data.apply(lambda row: EV(row['counts'], row['counts']**0.5), axis=1)
-    corrected_data["cm"] = data.apply(lambda row: row["inches"]*CM_PER_INCH, axis=1)
+    corrected_data["cm"] = corrected_data.apply(lambda row: row["inches"]*CM_PER_INCH, axis=1)
+    corrected_data["countpersec"] = corrected_data.apply(lambda row: row["counts"]/row["seconds"], axis=1)
+    corrected_data["truecounts"] = corrected_data.apply(lambda row: row["countpersec"]/(1-(row['countpersec']/MAX_COUNTRATE)), axis=1)
+    breakpoint()
 
-
-    corrected_data["counts"] = data.apply(lambda row: row['counts']/(1-(row['counts']/MAX_COUNTRATE)), axis=1)
-
-    print(corrected_data)
     breakpoint()
 
 
