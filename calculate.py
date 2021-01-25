@@ -6,6 +6,7 @@ from ErrorProp import ErroredValue as EV
 
 CM_PER_INCH = 2.54
 FILEPATH = None     # TODO JACK
+MAX_COUNTRATE = 3500
 
 def get():
     return {    # peter tissue orange
@@ -25,6 +26,16 @@ if __name__ == '__main__':
         'cm':      row['inches']*CM_PER_INCH,
         'seconds': row['seconds'],
         'counts':  EV(row['counts'], row['counts']**0.5)
-        }, axis=1)
-    print(with_errors)
+    }, axis=1)
+
+    print(type(with_errors))
+
+    deadtime_corrected = with_errors.apply(lambda row: {
+        'cm': row['cm'],
+        'seconds': row['seconds'],
+        'counts': row['counts']/(1-(row['counts']/MAX_COUNTRATE))
+    }, axis=1)
+
+    print(deadtime_corrected)
+
 
