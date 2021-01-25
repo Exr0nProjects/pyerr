@@ -1,0 +1,41 @@
+inches,seconds,counts
+0,30,7368
+1,30,3948
+2,30,2051
+3,30,960
+4,30,401
+5,30,172
+6,30,61
+background,300,62
+"tissues, yellow",,
+Background,,
+Time(s),Radiation(counts),
+300,62,
+,,
+Yellow Source  - No Absorber,,
+Time(s),Radiation(counts),
+30,7368,
+,,
+Yellow Source -  1 Tissue,,
+Time(s),Radiation(counts),
+30,3948,
+,,
+Yellow Source -  2 Tissue,,
+Time(s),Radiation(counts),
+30,2051,
+,,
+Yellow Source -  3 Tissue,,
+Time(s),Radiation(counts),
+30,960,
+,,
+Yellow Source -  4 Tissue,,
+Time(s),Radiation(counts),
+30,401,
+,,
+Yellow Source -  5 Tissue,,
+Time(s),Radiation(counts),
+30,172,
+,,
+Yellow Source -  6 Tissue,,
+Time(s),Radiation(counts),
+30,61,

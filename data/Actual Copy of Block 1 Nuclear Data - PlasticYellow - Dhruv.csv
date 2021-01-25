@@ -1,0 +1,27 @@
+inches,seconds,counts
+0.004,30,353
+0.008,60,20
+0.03,120,33
+0.04,240,54
+background,300,62
+"plastic, yellow",,
+,,
+Background,,
+Time(s),Radiation(counts),
+300,62,
+,,
+Yellow Source - 0.004 inch Plastic,,
+Time(s),Radiation(counts),
+30,353,
+,,
+Yellow Source - 0.008 inch Plastic,,
+Time(s),Radiation(counts),
+60,20,
+,,
+Yellow Source - 0.03 inch Plastic,,
+Time(s),Radiation(counts),
+120,33,
+,,
+Yellow Source - 0.04 inch Plastic,,
+Time(s),Radiation(counts),
+240,54,

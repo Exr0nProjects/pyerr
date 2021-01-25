@@ -1,0 +1,10 @@
+inches,seconds,counts,,
+0,400,4358,,
+0.082,400,4136,,
+background,300,39,,
+"plastic, orange",,,,
+,,,,
+What,Absorber ,absoerber width (in),Time (s),Radiation Counts (counts)
+Background,none,n/a,300,39
+Orange,none,0,400,4358
+Orange,plastic,0.082,400,4136

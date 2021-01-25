@@ -1,0 +1,18 @@
+inches,seconds,counts,,
+0,400,4358,,
+0.032,400,4017,,
+0.064,400,3872,,
+0.125,400,3673,,
+0.25,400,2956,,
+background,300,39,,
+"lead, orange",,,,
+,,,,
+,,,,
+,,,,
+What,Absorber ,absoerber width (in),Time (s),Radiation Counts (counts)
+Background,none,n/a,300,39
+Orange,none,0,400,4358
+Orange,lead,0.032,400,4017
+Orange,lead,0.064,400,3872
+Orange,lead,0.125,400,3673
+Orange,lead,0.25,400,2956

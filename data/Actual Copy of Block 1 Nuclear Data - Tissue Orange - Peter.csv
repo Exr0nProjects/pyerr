@@ -1,0 +1,15 @@
+inches,seconds,counts,,
+0,400,4358,,
+6,400,4116,,
+12,400,4041,,
+24,400,4052,,
+background,300,39,,
+"tissue, orange",,,,
+,,,,
+,,,,
+What,Absorber ,absoerber width (in),Time (s),Radiation Counts (counts)
+Background,none,n/a,300,39
+Orange,none,0,400,4358
+Orange,Tissue,6 tissues,400,4116
+Orange,tissue,12 tissues,400,4041
+Orange,tissue,24 tissues,400,4052
