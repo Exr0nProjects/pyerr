@@ -1,3 +1,5 @@
+import math
+
 class ErroredValue(object):
     def __init__(self, value, delta=0):
         self.value = value
@@ -44,4 +46,12 @@ class ErroredValue(object):
 
     def __repr__(self):
         return f'<ErroredValue {self.value:.2f}±{self.delta:.2f} at {hex(id(self))}>'
+
+    @property
+    def percentDelta(self):
+        return self.delta/self.value
+
+    @staticmethod
+    def ln(a):
+        return ErroredValue(math.log(a.value, math.e), ((a.delta)/a.value))
 
