@@ -1,3 +1,5 @@
+# type:ignore
+
 import pandas as pd
 
 import numpy as np
@@ -27,8 +29,9 @@ if __name__ == '__main__':
     corrected_data["cm"] = corrected_data.apply(lambda row: row["inches"]*CM_PER_INCH, axis=1)
     corrected_data["countpersec"] = corrected_data.apply(lambda row: row["counts"]/row["seconds"], axis=1)
     corrected_data["truecounts"] = corrected_data.apply(lambda row: row["countpersec"]/(1-(row['countpersec']/MAX_COUNTRATE)), axis=1)
-    breakpoint()
+    # corrected_data["relativeintersity"] = corrected_data.apply(lambda row: row["truecounts"]/, axis=1)
 
+    raw_data = corrected_data.loc[corrected_data["inches"]==0]["truecounts"]
     breakpoint()
 
 
