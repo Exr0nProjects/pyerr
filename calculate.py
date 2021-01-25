@@ -2,12 +2,15 @@ import pandas as pd
 from matplotlib import pyplot as plt
 import numpy as np
 
-from ErrorProp import ErroredValue
+from ErrorProp import ErroredValue as EV
+
+CM_PER_INCH = 2.54
+FILEPATH = None     # TODO JACK
 
 def get():
     return {    # peter tissue orange
-        'name': ('tissues', 'orange'),
-        'data': pd.dataframe(data={
+        'meta': ('tissues', 'orange'),
+        'data': pd.DataFrame(data={
             'inches': [ 0, 6, 12, 24],
             'seconds': [400]*4,
             'counts': [4358, 4116, 4041, 4052]}),
@@ -15,5 +18,13 @@ def get():
     };
 
 if __name__ == '__main__':
-    pass
+    from operator import itemgetter # https://stackoverflow.com/a/52083390/10372825
+    meta, data, background = itemgetter('meta', 'data', 'background')(get())
+    # get std dev with sqrt
+    with_errors = data.apply(lambda row: {
+        'cm':      row['inches']*CM_PER_INCH,
+        'seconds': row['seconds'],
+        'counts':  EV(row['counts'], row['counts']**0.5)
+        }, axis=1)
+    print(with_errors)
 
