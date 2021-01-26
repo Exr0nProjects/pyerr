@@ -28,6 +28,8 @@ def process(dataitem):
 
     corrected_data["predicted_halfthickness"] = pd.concat([pd.Series([EV(0)]), halfthickness_predicted]) # used custom log function for errors
 
+    corrected_data.attrs["meta"] = meta
+
     return corrected_data
 
 
