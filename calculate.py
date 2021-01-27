@@ -22,13 +22,14 @@ def process(dataitem):
 
     unblocked_count = corrected_data.loc[corrected_data["inches"]==0]["true_counts_sec"][0]
 
-    corrected_data["relative_intensity"] = corrected_data.apply(lambda row: row["true_counts_sec"]/unblocked_count, axis=1)
+    corrected_data["normalized_count_rate"] = corrected_data.apply(lambda row: row["true_counts_sec"]/unblocked_count, axis=1)
 
-    halfthickness_predicted = corrected_data.iloc[1:].apply(lambda row: row["inches"]/(EV.ln(row["relative_intensity"])/math.log(0.5, math.e)), axis=1)
+    # halfthickness_predicted = corrected_data.iloc[1:].apply(lambda row: row["inches"]/(EV.ln(row["normalized_count_rate"])/math.log(0.5, math.e)), axis=1)
 
-    corrected_data["predicted_halfthickness"] = pd.concat([pd.Series([EV(0)]), halfthickness_predicted]) # used custom log function for errors
+    # corrected_data["predicted_halfthickness"] = pd.concat([pd.Series([EV(0)]), halfthickness_predicted]) # used custom log function for errors
 
-    corrected_data.attrs["meta"] = meta
+    corrected_data.attrs["material"] = meta[0]
+    corrected_data.attrs["source"] = meta[1]
 
     return corrected_data
 
