@@ -1,5 +1,5 @@
 from datacleaning import globit
-from calculate import process
+from calculate import process, sMinFit, RelativeIntersity
 
 import matplotlib.pyplot as plt
 
@@ -16,7 +16,7 @@ def plot(index):
 
     plt.show()
 
-
+sMinFit(results[4], RelativeIntersity)
 
 breakpoint()
 

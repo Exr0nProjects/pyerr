@@ -6,7 +6,6 @@ import numpy as np
 from operator import itemgetter # https://stackoverflow.com/a/52083390/10372825
 from ErrorProp import ErroredValue as EV
 
-import matplotlib.pyplot as plt
 
 CM_PER_INCH = 2.54
 MAX_COUNTRATE = 3500
@@ -31,4 +30,23 @@ def process(dataitem):
 
     return corrected_data
 
+
+def RelativeIntersity(T, tSeries):
+    return tSeries.apply(lambda t: 0.5**(t/T))
+
+
+def SSE(indicies, prediction, logits, logits_error, function):
+    ri = function(prediction, indicies)
+    return (((logits-ri)/logits_error)**2).sum()
+
+def sMinFit(datatable, function, param=1, lr=1e-3, epsilon=1e-8, epochs=100):
+    logits = datatable.normalized_count_rate.apply(lambda x:x.value)
+    logits_err = datatable.normalized_count_rate.apply(lambda x:x.delta)
+    inches  = datatable.inches
+
+    for _ in range(epochs):
+        dydx = (SSE(inches, param, logits, logits_err, function)-SSE(inches, param-epsilon, logits, logits_err, function))/epsilon
+        breakpoint()
+        print(dydx)
+        # weight update
 
