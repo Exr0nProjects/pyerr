@@ -33,7 +33,9 @@ class ErroredValue(object):
         return ErroredValue((o*self.value), (o*self.value)*(((self.delta/self.value)**2 + 0)**0.5))
 
     def __truediv__(self, o):
-        if type(o) == ErroredValue:
+        if self is o:
+            return ErroredValue((self.value/o.value), 0)
+        elif type(o) == ErroredValue:
             return ErroredValue((self.value/o.value), (self.value/o.value)*(((self.delta/self.value)**2 + (o.delta/o.value)**2)**0.5))
         else:
             return ErroredValue((self.value/o), (self.value/o)*(((self.delta/self.value)**2)**0.5))

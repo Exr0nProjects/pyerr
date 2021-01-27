@@ -6,6 +6,8 @@ import numpy as np
 from operator import itemgetter # https://stackoverflow.com/a/52083390/10372825
 from ErrorProp import ErroredValue as EV
 
+import matplotlib.pyplot as plt
+
 CM_PER_INCH = 2.54
 MAX_COUNTRATE = 3500
 
