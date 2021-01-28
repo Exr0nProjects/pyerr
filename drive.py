@@ -18,9 +18,10 @@ def plot(index):
 
 
 # breakpoint()
-ins,outs = sMinFit(results[1], RelativeIntersity)
-plt.scatter(ins,outs)
-plt.show()
+# Fitting Values with Inches 
+# ins,outs = sMinFit(results[1], RelativeIntersity, lr = 5e-10)
+# Fitting values with # of Tissues
+ins,outs = sMinFit(results[4], RelativeIntersity, lr = 5e-8)
 
 breakpoint()
 
