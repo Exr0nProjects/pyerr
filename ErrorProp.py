@@ -6,28 +6,25 @@ class ErroredValue(object):
         self.delta = delta
 
     def __add__(self, o):
-        if type(o) == ErroredValue:
-            return ErroredValue((self.value+o.value), (((self.delta**2) + (o.delta**2))**0.5))
-        else:
-            return ErroredValue((self.value+o), (((self.delta**2) + 0)**0.5))
+        if type(o) != ErroredValue:
+            o = ErroredValue(o)
+        return ErroredValue((self.value+o.value), (((self.delta**2) + (o.delta**2))**0.5))
 
     def __radd__(self, o):
         return ErroredValue((o+self.value), (((self.delta**2) + 0)**0.5))
 
     def __sub__(self, o):
-        if type(o) == ErroredValue:
-            return ErroredValue((self.value-o.value), (((self.delta**2) + (o.delta**2))**0.5))
-        else:
-            return ErroredValue((self.value-o), (((self.delta**2) + 0)**0.5))
+        if type(o) != ErroredValue:
+            o = ErroredValue(o)
+        return ErroredValue((self.value-o.value), (((self.delta**2) + (o.delta**2))**0.5))
 
     def __rsub__(self, o):
         return ErroredValue((o-self.value), (((self.delta**2) + 0)**0.5))
 
     def __mul__(self, o):
-        if type(o) == ErroredValue:
-            return ErroredValue((self.value*o.value), (self.value*o.value)*(((self.delta/self.value)**2 + (o.delta/o.value)**2)**0.5))
-        else:
-            return ErroredValue((self.value*o), (self.value*o)*(((self.delta/self.value)**2 + 0)**0.5))
+        if type(o) != ErroredValue:
+            o = ErroredValue(o)
+        return ErroredValue((self.value*o.value), (self.value*o.value)*(((self.delta/self.value)**2 + (o.delta/o.value)**2)**0.5))
 
     def __rmul__(self, o):
         return ErroredValue((o*self.value), (o*self.value)*(((self.delta/self.value)**2 + 0)**0.5))
@@ -35,10 +32,9 @@ class ErroredValue(object):
     def __truediv__(self, o):
         if self is o:
             return ErroredValue((self.value/o.value), 0)
-        elif type(o) == ErroredValue:
-            return ErroredValue((self.value/o.value), (self.value/o.value)*(((self.delta/self.value)**2 + (o.delta/o.value)**2)**0.5))
-        else:
-            return ErroredValue((self.value/o), (self.value/o)*(((self.delta/self.value)**2)**0.5))
+        if type(o) != ErroredValue:
+            o = ErroredValue(o)
+        return ErroredValue((self.value/o.value), (self.value/o.value)*(((self.delta/self.value)**2 + (o.delta/o.value)**2)**0.5))
 
     def __rtruediv__(self,o):
         return ErroredValue((o/self.value), (o/self.value)*(((self.delta/self.value)**2)**0.5))
@@ -56,4 +52,3 @@ class ErroredValue(object):
     @staticmethod
     def ln(a):
         return ErroredValue(math.log(a.value, math.e), ((a.delta)/a.value))
-
