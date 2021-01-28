@@ -42,7 +42,7 @@ def SSE(indicies, prediction, logits, logits_error, function):
     ri = function(prediction, indicies)
     return ((logits-ri)**2/logits_error**2).sum()
 
-def sMinFit(datatable, function, param=1, lr=1e-4, epsilon=1e-8, epochs=100000):
+def sMinFit(datatable, function, param=1, lr=1e-4, epsilon=1e-8, epochs=10000):
     logits = datatable.normalized_count_rate.apply(lambda x:x.value)
     logits_err = datatable.normalized_count_rate.apply(lambda x:x.delta)
     inches  = datatable.inches
@@ -51,13 +51,20 @@ def sMinFit(datatable, function, param=1, lr=1e-4, epsilon=1e-8, epochs=100000):
     dydx = epsilon
     bar = tqdm.tqdm(range(epochs))
 
+    minParam = param
+    minS = int(1e10)
+
     for _ in bar:
         param_next = param-(dydx*lr+epsilon)
         loss = SSE(inches, param+epsilon, logits, logits_err, function)
         dydx = (loss-SSE(inches, param_next, logits, logits_err, function))/(param-param_next)
         param = param_next
 
-        bar.set_description(f'Current fit: {param:2f}, Update: {dydx:2f}, Loss: {loss:2f}')
+        bar.set_description(f'Current fit: {param:2f}, Best fit: {minParam:2f}, Best loss: {minS:2f}')
 
-    return param, SSE(inches, param+epsilon, logits, logits_err, function)
+        if loss < minS and param > 0:
+            minParam = param
+            minS = loss
+
+    return minParam, minS
 

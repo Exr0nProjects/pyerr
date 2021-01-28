@@ -1,6 +1,5 @@
-import pickle
-
 from datacleaning import globit
+from multiprocessing import Pool
 from calculate import process, sMinFit, RelativeIntersity
 
 import matplotlib.pyplot as plt
@@ -28,15 +27,17 @@ def plot(index):
 sMins = []
 fitTs = []
 
-for indx, result in enumerate(results):
-    t, smin = sMinFit(result, RelativeIntersity, lr = 2e-10)
+# for indx, result in enumerate(results):
+    # print(result.attrs["material"], result.predicted_halfthickness.apply(lambda row:row.value).mean())
 
-    sMins.append(smin)
-    fitTs.append(t)
+def process(indx):
+    t, smin = sMinFit(results[indx], RelativeIntersity, lr = 5e-4 if "tissue" == results[indx].attrs["material"] else 2e-8)
 
+    return [smin, t]
 
-with open("result.bin", "wb") as wb:
-    pickle.dump({"sMins": sMins, "fitTs": fitTs, "results":results}, wb)
+# if __name__ == '__main__':
+    # with Pool(5) as p:
+        # res = p.map(process, list(range(len(results))))
 
-breakpoint()
+    # breakpoint()
 
