@@ -1,3 +1,5 @@
+import pickle
+
 from datacleaning import globit
 from calculate import process, sMinFit, RelativeIntersity
 
@@ -27,11 +29,14 @@ sMins = []
 fitTs = []
 
 for indx, result in enumerate(results):
-    t, smin = sMinFit(result, RelativeIntersity, lr = 5e-8 if "tissue" == result.attrs["material"] else 5e-10)
+    t, smin = sMinFit(result, RelativeIntersity, lr = 2e-10)
 
     sMins.append(smin)
     fitTs.append(t)
 
+
+with open("result.bin", "wb") as wb:
+    pickle.dump({"sMins": sMins, "fitTs": fitTs, "results":results}, wb)
 
 breakpoint()
 

@@ -42,7 +42,7 @@ def SSE(indicies, prediction, logits, logits_error, function):
     ri = function(prediction, indicies)
     return ((logits-ri)**2/logits_error**2).sum()
 
-def sMinFit(datatable, function, param=1, lr=1e-4, epsilon=1e-8, epochs=6000):
+def sMinFit(datatable, function, param=1, lr=1e-4, epsilon=1e-8, epochs=100000):
     logits = datatable.normalized_count_rate.apply(lambda x:x.value)
     logits_err = datatable.normalized_count_rate.apply(lambda x:x.delta)
     inches  = datatable.inches
