@@ -53,10 +53,11 @@ def sMinFit(datatable, function, param=1, lr=1e-4, epsilon=1e-8, epochs=6000):
 
     for _ in bar:
         param_next = param-(dydx*lr+epsilon)
-        dydx = ((SSE(inches, param, logits, logits_err, function)-SSE(inches, param_next, logits, logits_err, function))/(param-param_next))
+        loss = SSE(inches, param+epsilon, logits, logits_err, function)
+        dydx = (loss-SSE(inches, param_next, logits, logits_err, function))/(param-param_next)
         param = param_next
 
-        bar.set_description(f'Current fit: {param:2f}, Update: {dydx:2f}')
+        bar.set_description(f'Current fit: {param:2f}, Update: {dydx:2f}, Loss: {loss:2f}')
 
     return param, SSE(inches, param+epsilon, logits, logits_err, function)
 
