@@ -21,7 +21,17 @@ def plot(index):
 # Fitting Values with Inches 
 # ins,outs = sMinFit(results[1], RelativeIntersity, lr = 5e-10)
 # Fitting values with # of Tissues
-ins,outs = sMinFit(results[4], RelativeIntersity, lr = 5e-8)
+# ins,outs = sMinFit(results[4], RelativeIntersity, lr = 5e-8)
+
+sMins = []
+fitTs = []
+
+for indx, result in enumerate(results):
+    t, smin = sMinFit(result, RelativeIntersity, lr = 5e-8 if "tissue" == result.attrs["material"] else 5e-10)
+
+    sMins.append(smin)
+    fitTs.append(t)
+
 
 breakpoint()
 

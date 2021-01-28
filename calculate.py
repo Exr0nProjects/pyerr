@@ -48,9 +48,6 @@ def sMinFit(datatable, function, param=1, lr=1e-4, epsilon=1e-8, epochs=6000):
     inches  = datatable.inches
     dydx = epsilon
 
-    ins = []
-    outs = []
-
     dydx = epsilon
     bar = tqdm.tqdm(range(epochs))
 
@@ -59,10 +56,7 @@ def sMinFit(datatable, function, param=1, lr=1e-4, epsilon=1e-8, epochs=6000):
         dydx = ((SSE(inches, param, logits, logits_err, function)-SSE(inches, param_next, logits, logits_err, function))/(param-param_next))
         param = param_next
 
-        ins.append(param)
-        outs.append(SSE(inches, param+epsilon, logits, logits_err, function))
-
         bar.set_description(f'Current fit: {param:2f}, Update: {dydx:2f}')
 
-    return ins, outs
+    return param, SSE(inches, param+epsilon, logits, logits_err, function)
 
