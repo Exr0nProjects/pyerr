@@ -25,28 +25,40 @@ def process(dataitem):
 
     corrected_data["normalized_count_rate"] = corrected_data.apply(lambda row: row["true_counts_sec"]/unblocked_count, axis=1)
 
+    halfthickness_predicted = corrected_data.iloc[1:].apply(lambda row: row["inches"]/(EV.ln(row["normalized_count_rate"])/math.log(0.5, math.e)), axis=1)
+
+    corrected_data["predicted_halfthickness"] = pd.concat([pd.Series([EV(0)]), halfthickness_predicted]) # used custom log function for errors
+
     corrected_data.attrs["material"] = meta[0]
     corrected_data.attrs["source"] = meta[1]
 
     return corrected_data
 
-
 def RelativeIntersity(T, tSeries):
     return tSeries.apply(lambda t: 0.5**(t/T))
 
-
 def SSE(indicies, prediction, logits, logits_error, function):
     ri = function(prediction, indicies)
-    return (((logits-ri)/logits_error)**2).sum()
+    return ((logits-ri)**2/logits_error**2).sum()
 
-def sMinFit(datatable, function, param=1, lr=1e-3, epsilon=1e-8, epochs=100):
+def sMinFit(datatable, function, param=1, lr=1e-4, epsilon=1e-8, epochs=2000):
     logits = datatable.normalized_count_rate.apply(lambda x:x.value)
     logits_err = datatable.normalized_count_rate.apply(lambda x:x.delta)
     inches  = datatable.inches
+    dydx = epsilon
+
+    ins = []
+    outs = []
 
     for _ in range(epochs):
-        dydx = (SSE(inches, param, logits, logits_err, function)-SSE(inches, param-epsilon, logits, logits_err, function))/epsilon
-        breakpoint()
-        print(dydx)
+        # TODO broken
+        dydx = (SSE(inches, param+epsilon, logits, logits_err, function)-SSE(inches, param, logits, logits_err, function))/epsilon
+        param = param-dydx*lr
+
+        ins.append(param)
+        outs.append(SSE(inches, param+epsilon, logits, logits_err, function))
+        # print(param)
         # weight update
+
+    return ins, outs
 

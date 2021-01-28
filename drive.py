@@ -16,7 +16,11 @@ def plot(index):
 
     plt.show()
 
-sMinFit(results[4], RelativeIntersity)
+
+breakpoint()
+ins,outs = sMinFit(results[4], RelativeIntersity)
+plt.scatter(ins,outs)
+plt.show()
 
 breakpoint()
 
