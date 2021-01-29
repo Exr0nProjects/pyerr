@@ -40,10 +40,10 @@ class ErroredValue(object):
         return ErroredValue((o/self.value), (o/self.value)*(((self.delta/self.value)**2)**0.5))
 
     def __str__(self):
-        return f'{self.value:.2f}±{self.delta:.2f}'
+        return f'{self.value:.6f}±{self.delta:.6f}'
 
     def __repr__(self):
-        return f'<ErroredValue {self.value:.2f}±{self.delta:.2f} at {hex(id(self))}>'
+        return f'<ErroredValue {self.value:.6f}±{self.delta:.6f} at {hex(id(self))}>'
 
     @property
     def percentDelta(self):

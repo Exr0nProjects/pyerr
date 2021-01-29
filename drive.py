@@ -15,11 +15,9 @@ def plot(index):
     ncr =  results[index].apply(lambda row:row["normalized_count_rate"].value, axis=1)
     delta =  results[index].apply(lambda row:row["normalized_count_rate"].delta, axis=1)
 
-
     plt.errorbar(inches, ncr, yerr=delta)
 
     plt.show()
-
 
 # breakpoint()
 # Fitting Values with Inches
@@ -44,6 +42,8 @@ fitTs.append(t)
 
 with open(f"out/result_{indx}.bin", "wb") as wb:
     pickle.dump({"sMins": sMins, "fitTs": fitTs, "results":results}, wb)
+//=======
+//sMinFit(results[7], RelativeIntersity)
+//>>>>>>> Stashed changes
 
 breakpoint()
-

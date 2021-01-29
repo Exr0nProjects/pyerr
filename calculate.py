@@ -7,20 +7,24 @@ import numpy as np
 from operator import itemgetter # https://stackoverflow.com/a/52083390/10372825
 from ErrorProp import ErroredValue as EV
 
-
 CM_PER_INCH = 2.54
 MAX_COUNTRATE = 3500
 
 def process(dataitem):
     meta, data, background = itemgetter('meta', 'data', 'background')(dataitem)
     background_rate = EV(background["counts"], background["counts"]**0.5)/background["seconds"]
+    background_rate = background_rate / (1-(background_rate/MAX_COUNTRATE))
+
 
     # get std dev with sqrt
     corrected_data = pd.DataFrame.copy(data)
     corrected_data["counts"] = data.apply(lambda row: EV(row['counts'], row['counts']**0.5), axis=1)
     corrected_data["cm"] = corrected_data.apply(lambda row: row["inches"]*CM_PER_INCH, axis=1)
     corrected_data["counts_sec"] = corrected_data.apply(lambda row: row["counts"]/row["seconds"], axis=1)
-    corrected_data["true_counts_sec"] = corrected_data.apply(lambda row: (row["counts_sec"]/(1-(row['counts_sec']/MAX_COUNTRATE)))-background_rate, axis=1)
+
+    corrected_data["deadtime_adjusted"] = corrected_data.apply(lambda row: (row["counts_sec"]/(1-(row['counts_sec']/MAX_COUNTRATE))), axis=1)
+    corrected_data["true_counts_sec"] = corrected_data.apply(lambda row: row["deadtime_adjusted"]-background_rate, axis=1)
+    # corrected_data["true_counts_sec"] = corrected_data.apply(lambda row: (row["counts_sec"]/(1-(row['counts_sec']/MAX_COUNTRATE)))-background_rate, axis=1)
 
     unblocked_count = corrected_data.loc[corrected_data["inches"]==0]["true_counts_sec"][0]
 
@@ -61,3 +65,10 @@ def sMinFit(datatable, function, param=1, lr=1e-4, epsilon=1e-8, epochs=100000):
 
     return param, SSE(inches, param+epsilon, logits, logits_err, function)
 
+    # breakpoint()
+
+    # for _ in range(epochs):
+    #     dydx = (SSE(inches, param, logits, logits_err, function)-SSE(inches, param-epsilon, logits, logits_err, function))/epsilon
+    #     breakpoint()
+    #     print(dydx)
+    #     # weight update
