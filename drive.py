@@ -51,12 +51,14 @@ fitTs = []
     # print(result.attrs["material"], result.predicted_halfthickness.apply(lambda row:row.value).mean())
 
 def process(indx, ax=None):
-    t, smin = sMinFit(results[indx], RelativeIntersity, lr = 5e-4 if "tissue" == results[indx].attrs["material"] else 2e-7)
+    attrs = results[indx].attrs
+    t, smin = sMinFit(results[indx], RelativeIntersity, lr = 5e-4 if "tissue" == attrs['material'] else 2e-7)
 
     inches, logits, logits_err = unwrap(results[indx])
     t_min, t_max = calculateSfitUncert(t, smin, smin+1, lambda T: SSE(inches, T, logits, logits_err, RelativeIntersity), ax=ax, low=0.1, high=30)
 
     if ax is not None:
+        ax.set_title(f"{attrs['material']} {attrs['source']}")
         ax.set_xlabel(f"T ({results[7].attrs['material']})")
         ax.set_ylabel("S(T)")
         ax.legend()
@@ -72,6 +74,8 @@ def process(indx, ax=None):
 # >>>>>>> 68cb3cc3a83d6f09391e99a4e1cc04d712bebe16
 
 if __name__ == '__main__':
-    fig, ax = plt.subplots()
-    print(process(7, ax))
-    plt.show()
+    print(len(results))
+    for i in range(9):
+        fig, ax = plt.subplots()
+        print(process(i, ax))
+        plt.savefig(f"out/{i}_{results[i].attrs['material']}_{results[i].attrs['source']}.png")
