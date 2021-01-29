@@ -1,3 +1,5 @@
+import multiprocessing
+
 from datacleaning import globit
 from multiprocessing import Pool
 from calculate import SSE, readdata, unwrap, sMinFit, RelativeIntersity, calculateSfitUncert
@@ -60,8 +62,7 @@ def process(indx, ax=None):
     inches, logits, logits_err = unwrap(results[indx])
     cost_func = lambda T: SSE(inches, T, logits, logits_err, RelativeIntersity)
 
-    # t, smin = sMinFit(cost_func, lr = 5e-4 if "tissue" == attrs['material'] else 2e-7)
-    t, smin = sMinFit(cost_func)
+    t, smin = sMinFit(cost_func, lr = 5e-4 if "tissue" == attrs['material'] else 2e-7)
 
     # neighborhood = np.arange(0, 0.05, 1/1000)   # 200 evenly spaced points
     # ax.scatter(neighborhood, list(map(lambda T: SSE(inches, T, logits, logits_err, RelativeIntersity), neighborhood)), color='black', label='S(T)')
@@ -75,7 +76,7 @@ def process(indx, ax=None):
         ax.scatter(neighborhood, list(map(cost_func, neighborhood)), color='black', label='S(T)')
 
         ax.set_title(f"{attrs['material']} {attrs['source']}")
-        ax.set_xlabel(f"T ({attrs['material']})")
+        ax.set_xlabel(f"T ({results[7].attrs['material']})")
         ax.set_ylabel("S(T)")
         ax.legend()
 
@@ -89,14 +90,15 @@ def process(indx, ax=None):
 
 # >>>>>>> 68cb3cc3a83d6f09391e99a4e1cc04d712bebe16
 
-from concurrent.futures import ThreadPoolExecutor
+def do(i):
+    fig, ax = plt.subplots()
+    print(process(i, ax))
+    plt.savefig(f"out/{i}_{results[i].attrs['material']}_{results[i].attrs['source']}.png")
 
 if __name__ == '__main__':
-    with open('out/params.tsv', 'w+') as wf, ThreadPoolExecutor(max_workers=10) as exer:
-        # for i in range(0, 9):
-        #     fig, ax = plt.subplots()
-        #     wf.write('	'.join((results[i].attrs['material'], results[i].attrs['source'], *list(map(lambda x: str(x), process(i, ax))))) + '\n')
-        #     plt.savefig(f"out/{i}_{results[i].attrs['material']}_{results[i].attrs['source']}.png")
-        res = exer.map(process, range(0, 9))
-        print(res)
+    # for i in range(0, 9):
+
+    with multiprocessing.Pool(10) as pl:
+        pl.map(do, list(range(0,9)))
+
 
