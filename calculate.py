@@ -52,7 +52,7 @@ def SSE(indicies, prediction, logits, logits_error, function):
 def unwrap(datatable):
     return datatable.inches, datatable.normalized_count_rate.apply(lambda x:x.value), datatable.normalized_count_rate.apply(lambda x:x.delta)
 
-def sMinFit(datatable, function, param=1, lr=1e-4, epsilon=1e-8, epochs=100000):
+def sMinFit(datatable, function, param=1, lr=1e-4, epsilon=1e-8, epochs=int(1e4)):
     inches, logits, logits_err = unwrap(datatable)
     dydx = epsilon
 
