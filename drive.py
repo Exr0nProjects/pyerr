@@ -1,5 +1,3 @@
-import multiprocessing
-
 from datacleaning import globit
 from multiprocessing import Pool
 from calculate import SSE, readdata, unwrap, sMinFit, RelativeIntersity, calculateSfitUncert
@@ -90,15 +88,8 @@ def process(indx, ax=None):
 
 # >>>>>>> 68cb3cc3a83d6f09391e99a4e1cc04d712bebe16
 
-def do(i):
-    fig, ax = plt.subplots()
-    print(process(i, ax))
-    plt.savefig(f"out/{i}_{results[i].attrs['material']}_{results[i].attrs['source']}.png")
-
 if __name__ == '__main__':
-    # for i in range(0, 9):
-
-    with multiprocessing.Pool(10) as pl:
-        pl.map(do, list(range(0,9)))
-
-
+    for i in range(0, 9):
+        fig, ax = plt.subplots()
+        print(process(i, ax))
+        plt.savefig(f"out/{i}_{results[i].attrs['material']}_{results[i].attrs['source']}.png")
