@@ -176,3 +176,4 @@ def calculateSfitUncert(bestx, besty, targety, function, ax=None, low=0, high=10
         ax.axvline(x=param_max, label=f"T_max = {param_max:.6f}", color='blue')
 
     return param_min, param_max
+
