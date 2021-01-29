@@ -87,17 +87,17 @@ def sMinFit(datatable, function, param=1, lr=1e-5, delta=1e-8, epochs=int(1e6), 
 
     for it in bar:   # lets just copy what they have here: https://towardsdatascience.com/implement-gradient-descent-in-python-9b93ed7108d1
         prev_p = param
-        inst_deriv = (SSE(x, param+delta, y, sig, function) - SSE(x, param-delta, y, sig, function))/(2*delta)
-        param -= lr * inst_deriv
+        dydx = (SSE(x, param+delta, y, sig, function) - SSE(x, param-delta, y, sig, function))/(2*delta)
+        param -= lr * dydx
 
-        print(f'param {param:.6f}, deriv {inst_deriv:.6f}, change {abs(prev_p - param)}')
-        # bar.set_description(f'param {param:.6f}, deriv {inst_deriv:.6f}, change {abs(prev_p - param)}')
+        print(f'param {param:.6f}, deriv {dydx:.6f}, change {abs(prev_p - param):.6f}')
+        # bar.set_description(f'param {param:.6f}, deriv {dydx:.6f}, change {abs(prev_p - param)}')
 
         trail_x.append(param)
         trail_y.append(SSE(x, param, y, sig, function))
 
         if SSE(x, param, y, sig, function) > SSE(x, prev_p, y, sig, function):
-            print("bad news bears")
+            print(f"bad news bears {SSE(x, param, y, sig, function)} > {SSE(x, prev_p, y, sig, function)}")
             ax.scatter(trail_x, trail_y)
             plt.savefig('out/broke.png')
             breakpoint()
