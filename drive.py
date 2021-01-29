@@ -1,6 +1,6 @@
 from datacleaning import globit
 from multiprocessing import Pool
-from calculate import process, sMinFit, RelativeIntersity
+from calculate import SSE, process, unwrap, sMinFit, RelativeIntersity, calculateSfitUncert
 
 import matplotlib.pyplot as plt
 
@@ -62,3 +62,16 @@ def process(indx):
     # breakpoint()
 
 # >>>>>>> 68cb3cc3a83d6f09391e99a4e1cc04d712bebe16
+
+if __name__ == '__main__':
+    # plot(7)
+    fig, ax = plt.subplots()
+    inches, logits, logits_err = unwrap(results[7])
+    param = 0.946
+    smin = 82
+    calculateSfitUncert(param, smin, smin+1, lambda T: SSE(inches, T, logits, logits_err, RelativeIntersity), ax=ax, low=0.1, high=30)
+
+    ax.set_xlabel(f"T ({results[7].attrs['material']})")
+    ax.set_ylabel("S(T)")
+    ax.legend()
+    plt.show()
