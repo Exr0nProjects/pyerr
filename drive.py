@@ -5,6 +5,8 @@ from calculate import process, sMinFit, RelativeIntersity
 
 import matplotlib.pyplot as plt
 
+from sys import argv
+
 data = globit("./data/*.csv")
 results = [process(i) for i in data]
 
@@ -20,7 +22,7 @@ def plot(index):
 
 
 # breakpoint()
-# Fitting Values with Inches 
+# Fitting Values with Inches
 # ins,outs = sMinFit(results[1], RelativeIntersity, lr = 5e-10)
 # Fitting values with # of Tissues
 # ins,outs = sMinFit(results[4], RelativeIntersity, lr = 5e-8)
@@ -28,14 +30,19 @@ def plot(index):
 sMins = []
 fitTs = []
 
-for indx, result in enumerate(results):
-    t, smin = sMinFit(result, RelativeIntersity, lr = 2e-10)
+# for indx, result in enumerate(results):
 
-    sMins.append(smin)
-    fitTs.append(t)
+print(len(results))
 
+_, indx = argv
+indx = int(indx)
+result = results[indx]
+t, smin = sMinFit(result, RelativeIntersity, lr = 2e-10, epochs=int(2e9))
 
-with open("result.bin", "wb") as wb:
+sMins.append(smin)
+fitTs.append(t)
+
+with open(f"out/result_{indx}.bin", "wb") as wb:
     pickle.dump({"sMins": sMins, "fitTs": fitTs, "results":results}, wb)
 
 breakpoint()
