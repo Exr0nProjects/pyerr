@@ -15,7 +15,7 @@ MAX_COUNTRATE = 3500
 GOOD_ENOUGH = 1e-9
 OFF_FACTOR = 10
 
-def process(dataitem):
+def readdata(dataitem):
     meta, data, background = itemgetter('meta', 'data', 'background')(dataitem)
     background_rate = EV(background["counts"], background["counts"]**0.5)/background["seconds"]
     background_rate = background_rate / (1-(background_rate/MAX_COUNTRATE))
@@ -78,9 +78,7 @@ def unwrap(datatable):
 #     #     print(dydx)
 #     #     # weight update
 
-def sMinFit(datatable, function, param=1, lr=1e-7, delta=1e-8, epochs=int(1e6), ax=None):
-    x, y, sig = unwrap(datatable)
-
+def sMinFit(function, param=1, lr=1e-7, delta=1e-8, epochs=int(1e6), ax=None):
     bar = tqdm.tqdm(range(epochs))
 
     trail_x = []
@@ -90,16 +88,16 @@ def sMinFit(datatable, function, param=1, lr=1e-7, delta=1e-8, epochs=int(1e6), 
 
     for it in bar:   # lets just copy what they have here: https://towardsdatascience.com/implement-gradient-descent-in-python-9b93ed7108d1
         prev_p = param
-        dydx = (SSE(x, param+delta, y, sig, function) - SSE(x, param-delta, y, sig, function))/(2*delta)
+        dydx = (function(param+delta) - function(param-delta))/(2*delta)
         param -= lr * dydx
 
         # print(f'param {param:.6f}, deriv {dydx:.6f}, change {abs(prev_p - param):.6f}')
         bar.set_description(f'param {param:.6f}, deriv {dydx:.6f}, change {abs(prev_p - param)}')
 
-        newcost = SSE(x, param,  y, sig, function)
-        oldcost = SSE(x, prev_p, y, sig, function)
+        newcost = function(param)
+        oldcost = function(prev_p)
         if abs(newcost-oldcost) > abs(OFF_FACTOR*dydx*(param-prev_p)) or newcost > oldcost:
-            print(f"bad news bears {oldcost} and {newcost} differ by too much")
+            # print(f"bad news bears {oldcost} and {newcost} differ by too much")
             if ax is not None:
                 ax.scatter(trail_x, trail_y)
                 plt.savefig('out/broke.png')
@@ -110,22 +108,21 @@ def sMinFit(datatable, function, param=1, lr=1e-7, delta=1e-8, epochs=int(1e6), 
             lr /= 2
             incident = it
             param = prev_p
-            print("lets try again...")
             continue
 
         if it - incident > 1e3:
-            lr *= 1.1
+            lr *= 1.2
             incident = it
 
         # # sound the alarm if loss goes up
-        # if SSE(x, param, y, sig, function) > SSE(x, prev_p, y, sig, function):
-        #     print(f"bad news bears {SSE(x, param, y, sig, function)} > {SSE(x, prev_p, y, sig, function)}")
+        # if function(param) > function(prev_p):
+        #     print(f"bad news bears {function(param)} > {function(prev_p)}")
         #     ax.scatter(trail_x, trail_y)
         #     plt.savefig('out/broke.png')
         #     breakpoint()
 
         trail_x.append(param)
-        trail_y.append(SSE(x, param, y, sig, function))
+        trail_y.append(function(param))
 
         # # pause every 1e4 iterations for a checkup
         # if it % int(1e4) == 0:
@@ -140,9 +137,7 @@ def sMinFit(datatable, function, param=1, lr=1e-7, delta=1e-8, epochs=int(1e6), 
                 plt.savefig('out/temp.png')
             break
 
-    return param, SSE(x, param, y, sig, function)
-
-
+    return param, function(param)
 
 def calculateSfitUncert(bestx, besty, targety, function, ax=None, low=0, high=100):
     def bisect(low, high, target, function):
@@ -178,6 +173,6 @@ def calculateSfitUncert(bestx, besty, targety, function, ax=None, low=0, high=10
 
         # plot found information
         ax.axvline(x=param_min, label=f"T_min = {param_min:.6f}", color='red')
-        ax.axvline(x=param_max, label=f"T_min = {param_max:.6f}", color='blue')
+        ax.axvline(x=param_max, label=f"T_max = {param_max:.6f}", color='blue')
 
     return param_min, param_max
