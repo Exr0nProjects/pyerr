@@ -3,6 +3,8 @@ from multiprocessing import Pool
 from calculate import SSE, process, unwrap, sMinFit, RelativeIntersity, calculateSfitUncert
 
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
 from sys import argv
 
@@ -53,12 +55,24 @@ fitTs = []
 def process(indx, ax=None):
     attrs = results[indx].attrs
 
+    print(f"processsing {attrs['material']} {attrs['source']}")
+
+
     t, smin = sMinFit(results[indx], RelativeIntersity, lr = 5e-4 if "tissue" == attrs['material'] else 2e-7, ax=ax)
 
     inches, logits, logits_err = unwrap(results[indx])
+
+    neighborhood = np.arange(0, 0.05, 1/1000)   # 200 evenly spaced points
+    ax.scatter(neighborhood, list(map(lambda T: SSE(inches, T, logits, logits_err, RelativeIntersity), neighborhood)), color='black', label='S(T)')
+    plt.savefig('out/near.png')
+    breakpoint()
+
     t_min, t_max = calculateSfitUncert(t, smin, smin+1, lambda T: SSE(inches, T, logits, logits_err, RelativeIntersity), ax=ax, low=0.1, high=30)
 
     if ax is not None:
+        # neighborhood = np.arange(t-(t-t_min)*2, t+(t_max-t)*2, abs_err*4/200)   # 200 evenly spaced points
+        # ax.scatter(neighborhood, list(map(function, neighborhood)), color='black', label='S(T)')
+
         ax.set_title(f"{attrs['material']} {attrs['source']}")
         ax.set_xlabel(f"T ({results[7].attrs['material']})")
         ax.set_ylabel("S(T)")
@@ -75,7 +89,6 @@ def process(indx, ax=None):
 # >>>>>>> 68cb3cc3a83d6f09391e99a4e1cc04d712bebe16
 
 if __name__ == '__main__':
-    print(len(results))
     for i in range(1, 9):
         fig, ax = plt.subplots()
         print(process(i, ax))
