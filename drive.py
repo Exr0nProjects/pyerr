@@ -52,7 +52,8 @@ fitTs = []
 
 def process(indx, ax=None):
     attrs = results[indx].attrs
-    t, smin = sMinFit(results[indx], RelativeIntersity, lr = 5e-4 if "tissue" == attrs['material'] else 2e-7)
+
+    t, smin = sMinFit(results[indx], RelativeIntersity, lr = 5e-4 if "tissue" == attrs['material'] else 2e-7, ax=ax)
 
     inches, logits, logits_err = unwrap(results[indx])
     t_min, t_max = calculateSfitUncert(t, smin, smin+1, lambda T: SSE(inches, T, logits, logits_err, RelativeIntersity), ax=ax, low=0.1, high=30)
@@ -75,7 +76,7 @@ def process(indx, ax=None):
 
 if __name__ == '__main__':
     print(len(results))
-    for i in range(9):
+    for i in range(1, 9):
         fig, ax = plt.subplots()
         print(process(i, ax))
         plt.savefig(f"out/{i}_{results[i].attrs['material']}_{results[i].attrs['source']}.png")

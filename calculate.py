@@ -4,6 +4,7 @@ import tqdm
 import math
 import pandas as pd
 import numpy as np
+from matplotlib import pyplot as plt
 from operator import itemgetter # https://stackoverflow.com/a/52083390/10372825
 from ErrorProp import ErroredValue as EV
 
@@ -52,30 +53,67 @@ def SSE(indicies, prediction, logits, logits_error, function):
 def unwrap(datatable):
     return datatable.inches, datatable.normalized_count_rate.apply(lambda x:x.value), datatable.normalized_count_rate.apply(lambda x:x.delta)
 
-def sMinFit(datatable, function, param=1, lr=1e-4, epsilon=1e-8, epochs=int(1e4)):
-    inches, logits, logits_err = unwrap(datatable)
-    dydx = epsilon
+# def sMinFit(datatable, function, param=1, lr=1e-4, epsilon=1e-8, epochs=int(1e4)):
+#     inches, logits, logits_err = unwrap(datatable)
+#
+#     dydx = epsilon
+#     bar = tqdm.tqdm(range(epochs))
+#
+#     for _ in bar:
+#         param_next = param-(dydx*lr+epsilon)
+#         loss = SSE(inches, param+epsilon, logits, logits_err, function)
+#         dydx = (loss-SSE(inches, param_next, logits, logits_err, function))/(param-param_next)
+#         param = param_next
+#
+#         bar.set_description(f'Current fit: {param:2f}, Update: {dydx:2f}, Loss: {loss:2f}')
+#
+#     return param, SSE(inches, param+epsilon, logits, logits_err, function)
+#
+#     # breakpoint()
+#
+#     # for _ in range(epochs):
+#     #     dydx = (SSE(inches, param, logits, logits_err, function)-SSE(inches, param-epsilon, logits, logits_err, function))/epsilon
+#     #     breakpoint()
+#     #     print(dydx)
+#     #     # weight update
 
-    dydx = epsilon
+def sMinFit(datatable, function, param=1, lr=1e-5, delta=1e-8, epochs=int(1e6), ax=None):
+    x, y, sig = unwrap(datatable)
+
     bar = tqdm.tqdm(range(epochs))
 
-    for _ in bar:
-        param_next = param-(dydx*lr+epsilon)
-        loss = SSE(inches, param+epsilon, logits, logits_err, function)
-        dydx = (loss-SSE(inches, param_next, logits, logits_err, function))/(param-param_next)
-        param = param_next
+    trail_x = []
+    trail_y = []
 
-        bar.set_description(f'Current fit: {param:2f}, Update: {dydx:2f}, Loss: {loss:2f}')
+    for it in bar:   # lets just copy what they have here: https://towardsdatascience.com/implement-gradient-descent-in-python-9b93ed7108d1
+        prev_p = param
+        inst_deriv = (SSE(x, param+delta, y, sig, function) - SSE(x, param-delta, y, sig, function))/(2*delta)
+        param -= lr * inst_deriv
 
-    return param, SSE(inches, param+epsilon, logits, logits_err, function)
+        print(f'param {param:.6f}, deriv {inst_deriv:.6f}, change {abs(prev_p - param)}')
+        # bar.set_description(f'param {param:.6f}, deriv {inst_deriv:.6f}, change {abs(prev_p - param)}')
 
-    # breakpoint()
+        trail_x.append(param)
+        trail_y.append(SSE(x, param, y, sig, function))
 
-    # for _ in range(epochs):
-    #     dydx = (SSE(inches, param, logits, logits_err, function)-SSE(inches, param-epsilon, logits, logits_err, function))/epsilon
-    #     breakpoint()
-    #     print(dydx)
-    #     # weight update
+        if SSE(x, param, y, sig, function) > SSE(x, prev_p, y, sig, function):
+            print("bad news bears")
+            ax.scatter(trail_x, trail_y)
+            plt.savefig('out/broke.png')
+            breakpoint()
+
+        if it % int(1e4) == 0:
+            if ax is not None:
+                ax.scatter(trail_x, trail_y, label='Gradient Descent')
+                plt.savefig('out/temp.png')
+                breakpoint()
+
+        if abs(prev_p - param) < GOOD_ENOUGH:
+            break
+
+    return param, SSE(x, param, y, sig, function)
+
+
 
 def calculateSfitUncert(bestx, besty, targety, function, ax=None, low=0, high=100):
     def bisect(low, high, target, function):
