@@ -11,14 +11,22 @@ from sys import argv
 data = globit("./data/*.csv")
 results = [readdata(i) for i in data]
 
-def plot(index):
+def plot(index, ax=None):
     inches = results[index].inches
     ncr =  results[index].apply(lambda row:row["normalized_count_rate"].value, axis=1)
     delta =  results[index].apply(lambda row:row["normalized_count_rate"].delta, axis=1)
 
-    plt.errorbar(inches, ncr, yerr=delta)
+    inches, ncr, delta = zip(*sorted(zip(inches, ncr, delta)))
 
-    plt.show()
+    ax.errorbar(inches, ncr, yerr=delta, color='#245b72', ecolor='#9ad2ea', elinewidth=1, label='NCR')
+    ax.fill_between(np.array(inches), np.array(ncr)+np.array(delta), np.array(ncr)-np.array(delta), alpha=0.1)
+
+    attrs = results[i].attrs
+    ax.set_title(f"Thickness vs. NCR ({attrs['material']}, {attrs['source']})")
+    ax.set_xlabel(f"Thickness ({'tissues' if 'tissue' in attrs['material'] else 'inches'})")
+    ax.set_ylabel("Normalized Count Rate (cts/s)")
+    ax.legend()
+
 
 # breakpoint()
 # Fitting Values with Inches
@@ -73,9 +81,9 @@ def process(indx, ax=None):
         neighborhood = np.arange(t-(t-t_min)*2, t+(t_max-t)*2, (t_max-t_min)*2/200)   # 200 evenly spaced points
         ax.scatter(neighborhood, list(map(cost_func, neighborhood)), color='black', label='S(T)')
 
-        ax.set_title(f"{attrs['material']} {attrs['source']}")
-        ax.set_xlabel(f"T ({results[7].attrs['material']})")
-        ax.set_ylabel("S(T)")
+        ax.set_title(f"Half-Thickness Fit ({attrs['material']}, {attrs['source']})")
+        ax.set_xlabel(f"Half-Thickness T ({'tissues' if 'tissue' in results[indx].attrs['material'] else 'inches'})")
+        ax.set_ylabel("S(T) (sum squared error)")
         ax.legend()
 
     return smin, t, t_min, t_max
@@ -89,7 +97,10 @@ def process(indx, ax=None):
 # >>>>>>> 68cb3cc3a83d6f09391e99a4e1cc04d712bebe16
 
 if __name__ == '__main__':
-    for i in range(0, 9):
+    for i in range(0, 12):
+        fig, ax = plt.subplots()
+        plot(i, ax)
+        plt.savefig(f"out/{i}_{results[i].attrs['material']}_{results[i].attrs['source']}_ncr.png")
         fig, ax = plt.subplots()
         print(process(i, ax))
-        plt.savefig(f"out/{i}_{results[i].attrs['material']}_{results[i].attrs['source']}.png")
+        plt.savefig(f"out/{i}_{results[i].attrs['material']}_{results[i].attrs['source']}_gradient.png")
