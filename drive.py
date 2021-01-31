@@ -1,3 +1,7 @@
+# type:ignore
+
+from ErrorProp import ErroredValue as EV
+
 from datacleaning import globit
 from multiprocessing import Pool
 from calculate import SSE, readdata, unwrap, sMinFit, RelativeIntersity, calculateSfitUncert
@@ -22,7 +26,7 @@ def plot(index, ax=None):
     ax.fill_between(np.array(inches), np.array(ncr)+np.array(delta), np.array(ncr)-np.array(delta), alpha=0.1)
 
     attrs = results[i].attrs
-    ax.set_title(f"Thickness vs. NCR ({attrs['material']}, {attrs['source']})")
+    ax.set_title(f"Thickness vs. NCR+Fit ({attrs['material']}, {attrs['source']})")
     ax.set_xlabel(f"Thickness ({'tissues' if 'tissue' in attrs['material'] else 'inches'})")
     ax.set_ylabel("Normalized Count Rate (cts/s)")
     ax.legend()
@@ -88,6 +92,26 @@ def process(indx, ax=None):
 
     return smin, t, t_min, t_max
 
+def overlaid(indx, bestFit, ax=None):
+    inches, logits, logits_err = unwrap(results[indx])
+
+    minInches = min(inches)
+    maxInches = max(inches)
+
+    x_values = np.arange(minInches, maxInches, 5e-3).tolist()
+    y_values = [0.5**(i/bestFit) for i in x_values]
+
+    y_content = [i.value for i in y_values]
+    y_delta = [i.delta for i in y_values]
+
+    inches, ncr, delta = zip(*sorted(zip(x_values, y_content, y_delta)))
+
+    ax.plot(inches, ncr, color='#4e6d41', label='NCR (best fit T)')
+    ax.fill_between(np.array(inches), np.array(ncr)+np.array(delta), np.array(ncr)-np.array(delta), alpha=0.25, facecolor='#95e572')
+
+    attrs = results[i].attrs
+    ax.legend()
+
 # if __name__ == '__main__':
     # with Pool(5) as p:
         # res = p.map(process, list(range(len(results))))
@@ -98,9 +122,12 @@ def process(indx, ax=None):
 
 if __name__ == '__main__':
     for i in range(0, 12):
-        fig, ax = plt.subplots()
-        plot(i, ax)
-        plt.savefig(f"out/{i}_{results[i].attrs['material']}_{results[i].attrs['source']}_ncr.png")
-        fig, ax = plt.subplots()
-        print(process(i, ax))
-        plt.savefig(f"out/{i}_{results[i].attrs['material']}_{results[i].attrs['source']}_gradient.png")
+        fig1, ax1 = plt.subplots()
+        plot(i, ax1)
+        fig1.savefig(f"out/{i}_{results[i].attrs['material']}_{results[i].attrs['source']}_ncr.png")
+        fig2, ax2 = plt.subplots()
+        sMin, t, tmin, tmax = process(i, ax2)
+        fig2.savefig(f"out/{i}_{results[i].attrs['material']}_{results[i].attrs['source']}_gradient.png")
+        overlaid(i, EV(t, max(tmin,tmax)), ax1)
+        fig1.savefig(f"out/{i}_{results[i].attrs['material']}_{results[i].attrs['source']}_ncr_overlay.png")
+

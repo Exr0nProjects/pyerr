@@ -39,6 +39,10 @@ class ErroredValue(object):
     def __rtruediv__(self,o):
         return ErroredValue((o/self.value), (o/self.value)*(((self.delta/self.value)**2)**0.5))
 
+    # https://physics.stackexchange.com/questions/411879/how-to-calculate-the-percentage-error-of-ex-if-percentage-error-in-measuring
+    def __rpow__(self, a): 
+        return ErroredValue(a**(self.value), (0.5**self.value)*math.log(a, math.e)*self.delta)
+
     def __str__(self):
         return f'{self.value:.6f}±{self.delta:.6f}'
 
