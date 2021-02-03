@@ -21,15 +21,14 @@ def readdata(dataitem):
     background_rate = background_rate / (1-(background_rate/MAX_COUNTRATE))
 
 
-    # get std dev with sqrt
+    # here is the actual data analysis
     corrected_data = pd.DataFrame.copy(data)
-    corrected_data["counts"] = data.apply(lambda row: EV(row['counts'], row['counts']**0.5), axis=1)
+    corrected_data["counts"] = data.apply(lambda row: EV(row['counts'], row['counts']**0.5), axis=1)    # get std dev with sqrt
     corrected_data["cm"] = corrected_data.apply(lambda row: row["inches"]*CM_PER_INCH, axis=1)
     corrected_data["counts_sec"] = corrected_data.apply(lambda row: row["counts"]/row["seconds"], axis=1)
 
     corrected_data["deadtime_adjusted"] = corrected_data.apply(lambda row: (row["counts_sec"]/(1-(row['counts_sec']/MAX_COUNTRATE))), axis=1)
     corrected_data["true_counts_sec"] = corrected_data.apply(lambda row: row["deadtime_adjusted"]-background_rate, axis=1)
-    # corrected_data["true_counts_sec"] = corrected_data.apply(lambda row: (row["counts_sec"]/(1-(row['counts_sec']/MAX_COUNTRATE)))-background_rate, axis=1)
 
     unblocked_count = corrected_data.loc[corrected_data["inches"]==0]["true_counts_sec"][0]
 
@@ -39,6 +38,7 @@ def readdata(dataitem):
 
     corrected_data["predicted_halfthickness"] = pd.concat([pd.Series([EV(0)]), halfthickness_predicted]) # used custom log function for errors
 
+    # renaming for convienence
     corrected_data.attrs["material"] = meta[0]
     corrected_data.attrs["source"] = meta[1]
 
@@ -54,117 +54,59 @@ def SSE(indicies, prediction, logits, logits_error, function):
 def unwrap(datatable):
     return datatable.inches, datatable.normalized_count_rate.apply(lambda x:x.value), datatable.normalized_count_rate.apply(lambda x:x.delta)
 
-# def sMinFit(datatable, function, param=1, lr=1e-4, epsilon=1e-8, epochs=int(1e4)):
-#     inches, logits, logits_err = unwrap(datatable)
-#
-#     dydx = epsilon
-#     bar = tqdm.tqdm(range(epochs))
-#
-#     for _ in bar:
-#         param_next = param-(dydx*lr+epsilon)
-#         loss = SSE(inches, param+epsilon, logits, logits_err, function)
-#         dydx = (loss-SSE(inches, param_next, logits, logits_err, function))/(param-param_next)
-#         param = param_next
-#
-#         bar.set_description(f'Current fit: {param:2f}, Update: {dydx:2f}, Loss: {loss:2f}')
-#
-#     return param, SSE(inches, param+epsilon, logits, logits_err, function)
-#
-#     # breakpoint()
-#
-#     # for _ in range(epochs):
-#     #     dydx = (SSE(inches, param, logits, logits_err, function)-SSE(inches, param-epsilon, logits, logits_err, function))/epsilon
-#     #     breakpoint()
-#     #     print(dydx)
-#     #     # weight update
-
 def sMinFit(function, param=1, lr=1e-7, delta=1e-8, epochs=int(1e6), ax=None):
     bar = tqdm.tqdm(range(epochs))
 
-    trail_x = []
-    trail_y = []
-
     incident = 0
 
-    for it in bar:   # lets just copy what they have here: https://towardsdatascience.com/implement-gradient-descent-in-python-9b93ed7108d1
+    for it in bar:   # differentiable grad desc inspired by: https://towardsdatascience.com/implement-gradient-descent-in-python-9b93ed7108d1
         prev_p = param
         dydx = (function(param+delta) - function(param-delta))/(2*delta)
         param -= lr * dydx
 
-        # print(f'param {param:.6f}, deriv {dydx:.6f}, change {abs(prev_p - param):.6f}')
         bar.set_description(f'param {param:.6f}, deriv {dydx:.6f}, change {abs(prev_p - param)}')
 
         newcost = function(param)
         oldcost = function(prev_p)
-        if abs(newcost-oldcost) > abs(OFF_FACTOR*dydx*(param-prev_p)) or newcost > oldcost:
-            # print(f"bad news bears {oldcost} and {newcost} differ by too much")
-            if ax is not None:
-                ax.scatter(trail_x, trail_y)
-                plt.savefig('out/broke.png')
-            #     ax.clear()
-            # trail_x = []
-            # trail_y = []
 
+        # if something goes wrong (change faster than expected or loss increases)
+        if abs(newcost-oldcost) > abs(OFF_FACTOR*dydx*(param-prev_p)) or newcost > oldcost:
+            # half the learning rate and try again
             lr /= 2
             incident = it
             param = prev_p
             continue
 
+        # no incidents in the past 1k steps, try converging faster
         if it - incident > 1e3:
             lr *= 1.2
             incident = it
 
-        # # sound the alarm if loss goes up
-        # if function(param) > function(prev_p):
-        #     print(f"bad news bears {function(param)} > {function(prev_p)}")
-        #     ax.scatter(trail_x, trail_y)
-        #     plt.savefig('out/broke.png')
-        #     breakpoint()
-
-        trail_x.append(param)
-        trail_y.append(function(param))
-
-        # # pause every 1e4 iterations for a checkup
-        # if it % int(1e4) == 0:
-        #     if ax is not None:
-        #         ax.scatter(trail_x, trail_y, label='Gradient Descent')
-        #         plt.savefig('out/temp.png')
-        #         breakpoint()
-
+        # updating slowly enough that we are probably converged
         if abs(prev_p - param) < GOOD_ENOUGH:
-            if ax is not None:
-                ax.scatter(trail_x, trail_y, label='Gradient Descent')
-                plt.savefig('out/temp.png')
             break
 
     return param, function(param)
 
 def calculateSfitUncert(bestx, besty, targety, function, ax=None, low=0, high=100):
     def bisect(low, high, target, function):
-        triedx, triedy = [], []
-        if (low > high): low, high = high, low
+        if (low > high): low, high = high, low  # invariant: low is less equal to high
         while (high-low > GOOD_ENOUGH):
             mid = (low+high)/2
-            triedx.append(mid)
-            triedy.append(function(mid))
             if (function(mid) < target) == (function(low) < target):
                 low = mid
             else:
                 high = mid
-        return low, (triedx, triedy)
+        return low
 
     # binary search on min and max
-    param_min, tries_min = bisect(low, bestx, targety, function)
-    param_max, tries_max = bisect(bestx, high, targety, function)
+    param_min = bisect(low, bestx, targety, function)
+    param_max = bisect(bestx, high, targety, function)
 
     # plot everything
     if ax is not None:
         # plot neighborhood
         abs_err = max(bestx - param_min, param_max-bestx)
-
-        # # plot binary search tries
-        # ax.scatter(*tries_min, color='grey')
-        # ax.scatter(*tries_max, color='grey')
 
         # plot given information
         ax.axhline(y=besty, label=f"S min = {besty:.6f}", color='green')
