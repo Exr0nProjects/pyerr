@@ -13,10 +13,16 @@ class ErroredValue(object):
     def __radd__(self, o):
         return ErroredValue((o+self.value), (((self.delta**2) + 0)**0.5))
 
+    def __radd__(self, o):
+        return ErroredValue((o+self.value), (((self.delta**2) + 0)**0.5))
+
     def __sub__(self, o):
         if type(o) != ErroredValue:
             o = ErroredValue(o)
         return ErroredValue((self.value-o.value), (((self.delta**2) + (o.delta**2))**0.5))
+
+    def __rsub__(self, o):
+        return ErroredValue((o-self.value), (((self.delta**2) + 0)**0.5))
 
     def __rsub__(self, o):
         return ErroredValue((o-self.value), (((self.delta**2) + 0)**0.5))
@@ -28,7 +34,7 @@ class ErroredValue(object):
 
     def __rmul__(self, o):
         return ErroredValue((o*self.value), (o*self.value)*(((self.delta/self.value)**2 + 0)**0.5))
-
+      
     def __truediv__(self, o):
         if self is o:
             return ErroredValue((self.value/o.value), 0)
