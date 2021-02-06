@@ -4,7 +4,12 @@ from ErrorProp import ErroredValue as EV
 
 from datacleaning import globit
 from multiprocessing import Pool
-from calculate import SSE, readdata, unwrap, sMinFit, RelativeIntersity, calculateSfitUncert
+from Statistics import sMinFit, calculateSfitUncert, SSE
+import math
+from matplotlib import pyplot as plt
+from operator import itemgetter # https://stackoverflow.com/a/52083390/10372825
+
+from config import PRINT_PRECISION
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -12,8 +17,44 @@ import pandas as pd
 
 from sys import argv
 
-data = globit("./data/*.csv")
-results = [readdata(i) for i in data]
+
+CM_PER_INCH = 2.54
+MAX_COUNTRATE = 3500
+
+def readdata(dataitem):
+    meta, data, background = itemgetter('meta', 'data', 'background')(dataitem)
+    background_rate = EV(background["counts"], background["counts"]**0.5)/background["seconds"]
+    background_rate = background_rate / (1-(background_rate/MAX_COUNTRATE))
+
+
+    # here is the actual data analysis
+    corrected_data = pd.DataFrame.copy(data)
+    corrected_data["counts"] = data.apply(lambda row: EV(row['counts'], row['counts']**0.5), axis=1)    # get std dev with sqrt
+    corrected_data["cm"] = corrected_data.apply(lambda row: row["inches"]*CM_PER_INCH, axis=1)
+    corrected_data["counts_sec"] = corrected_data.apply(lambda row: row["counts"]/row["seconds"], axis=1)
+
+    corrected_data["deadtime_adjusted"] = corrected_data.apply(lambda row: (row["counts_sec"]/(1-(row['counts_sec']/MAX_COUNTRATE))), axis=1)
+    corrected_data["true_counts_sec"] = corrected_data.apply(lambda row: row["deadtime_adjusted"]-background_rate, axis=1)
+
+    unblocked_count = corrected_data.loc[corrected_data["inches"]==0]["true_counts_sec"][0]
+
+    corrected_data["normalized_count_rate"] = corrected_data.apply(lambda row: row["true_counts_sec"]/unblocked_count, axis=1)
+
+    halfthickness_predicted = corrected_data.iloc[1:].apply(lambda row: row["inches"]/(EV.ln(row["normalized_count_rate"])/math.log(0.5, math.e)), axis=1)
+
+    corrected_data["predicted_halfthickness"] = pd.concat([pd.Series([EV(0)]), halfthickness_predicted]) # used custom log function for errors
+
+    # renaming for convienence
+    corrected_data.attrs["material"] = meta[0]
+    corrected_data.attrs["source"] = meta[1]
+
+    return corrected_data
+
+def RelativeIntersity(T, tSeries):
+    return tSeries.apply(lambda t: 0.5**(t/T))
+
+def unwrap(datatable):
+    return datatable.inches, datatable.normalized_count_rate.apply(lambda x:x.value), datatable.normalized_count_rate.apply(lambda x:x.delta)
 
 def plot(index, ax=None):
     inches = results[index].inches
@@ -37,9 +78,6 @@ def plot(index, ax=None):
 # ins,outs = sMinFit(results[1], RelativeIntersity, lr = 5e-10)
 # Fitting values with # of Tissues
 # ins,outs = sMinFit(results[4], RelativeIntersity, lr = 5e-8)
-
-sMins = []
-fitTs = []
 
 # for indx, result in enumerate(results):
 # <<<<<<< HEAD
@@ -70,14 +108,9 @@ def process(indx, ax=None, ax_alt=None):
     print(f"processsing {attrs['material']} {attrs['source']}")
 
     inches, logits, logits_err = unwrap(results[indx])
-    cost_func = lambda T: SSE(inches, T, logits, logits_err, RelativeIntersity)
+    cost_func = lambda T: SSE(RelativeIntersity, inches, T, logits, logits_err)
 
     t, smin = sMinFit(cost_func, lr = 5e-4 if "tissue" == attrs['material'] else 2e-7)
-
-    # neighborhood = np.arange(0, 0.05, 1/1000)   # 200 evenly spaced points
-    # ax.scatter(neighborhood, list(map(lambda T: SSE(inches, T, logits, logits_err, RelativeIntersity), neighborhood)), color='black', label='S(T)')
-    # plt.savefig('out/near.png')
-    # breakpoint()
 
     t_min, t_max = calculateSfitUncert(t, smin, smin+1, cost_func, ax=ax_alt, low=1e-9, high=1e3*t)
     t_min, t_max = calculateSfitUncert(t, smin, smin+1, cost_func, ax=ax, low=1e-9, high=1e3*t)
@@ -130,6 +163,12 @@ def overlaid(indx, bestFit, ax=None):
     # breakpoint()
 
 # >>>>>>> 68cb3cc3a83d6f09391e99a4e1cc04d712bebe16
+
+data = globit("./data/*.csv")
+results = [readdata(i) for i in data]
+
+sMins = []
+fitTs = []
 
 figa, axa = plt.subplots(nrows=4, ncols=3, figsize=(20, 25))
 figb, axb = plt.subplots(nrows=4, ncols=3, figsize=(20, 25))
