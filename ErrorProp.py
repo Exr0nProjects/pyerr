@@ -17,6 +17,7 @@ class ErroredValue(object):
         return ErroredValue((o+self.value), (((self.delta**2) + 0)**0.5))
 
     def __sub__(self, o):
+        if o is self: return ErroredValue(0)
         if type(o) != ErroredValue:
             o = ErroredValue(o)
         return ErroredValue((self.value-o.value), (((self.delta**2) + (o.delta**2))**0.5))
@@ -36,8 +37,7 @@ class ErroredValue(object):
         return ErroredValue((o*self.value), (o*self.value)*(((self.delta/self.value)**2 + 0)**0.5))
       
     def __truediv__(self, o):
-        if self is o:
-            return ErroredValue((self.value/o.value), 0)
+        if self is o: return ErroredValue(1)
         if type(o) != ErroredValue:
             o = ErroredValue(o)
         return ErroredValue((self.value/o.value), (self.value/o.value)*(((self.delta/self.value)**2 + (o.delta/o.value)**2)**0.5))
@@ -46,7 +46,7 @@ class ErroredValue(object):
         return ErroredValue((o/self.value), (o/self.value)*(((self.delta/self.value)**2)**0.5))
 
     # https://physics.stackexchange.com/questions/411879/how-to-calculate-the-percentage-error-of-ex-if-percentage-error-in-measuring
-    def __rpow__(self, a): 
+    def __rpow__(self, a):
         return ErroredValue(a**(self.value), (0.5**self.value)*math.log(a, math.e)*self.delta)
 
     def __str__(self):
@@ -62,3 +62,4 @@ class ErroredValue(object):
     @staticmethod
     def ln(a):
         return ErroredValue(math.log(a.value, math.e), ((a.delta)/a.value))
+
