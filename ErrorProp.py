@@ -1,9 +1,16 @@
 import math
 
+from mpmath import mp, mpf 
+
+mp.dps = 6
+
 class ErroredValue(object):
-    def __init__(self, value, delta=0):
-        self.value = value
-        self.delta = delta
+    def __init__(self, value, delta=0, percent_err=None):
+        self.value = mpf(value)
+        if type(percent_err) is float or type(percent_err) is int:
+            self.delta = mpf(value * percent_err * 0.01)
+        else:
+            self.delta = mpf(delta)
 
     def __add__(self, o):
         if type(o) != ErroredValue:
@@ -43,17 +50,20 @@ class ErroredValue(object):
         return ErroredValue((self.value/o.value), (self.value/o.value)*(((self.delta/self.value)**2 + (o.delta/o.value)**2)**0.5))
 
     def __rtruediv__(self,o):
-        return ErroredValue((o/self.value), (o/self.value)*(((self.delta/self.value)**2)**0.5))
+        return ErroredValue(o) / self
 
     # https://physics.stackexchange.com/questions/411879/how-to-calculate-the-percentage-error-of-ex-if-percentage-error-in-measuring
     def __rpow__(self, a):
         return ErroredValue(a**(self.value), (0.5**self.value)*math.log(a, math.e)*self.delta)
 
+    def __pow__(self, p):
+        return ErroredValue(self.value**p, abs(self.value**p) * (self.delta / abs(self.value)))
+
     def __str__(self):
-        return f'{self.value:.6f}±{self.delta:.6f}'
+        return f'{self.value}±{self.delta}'
 
     def __repr__(self):
-        return f'<ErroredValue {self.value:.6f}±{self.delta:.6f} at {hex(id(self))}>'
+        return f'<ErroredValue {self.value}±{self.delta} at {hex(id(self))}>'
 
     @property
     def percentDelta(self):
