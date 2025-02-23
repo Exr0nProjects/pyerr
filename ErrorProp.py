@@ -5,10 +5,14 @@ from mpmath import mp, mpf
 mp.dps = 6
 
 class ErroredValue(object):
-    def __init__(self, value, delta=0, percent_err=None):
+    def __init__(self, value, delta=0, percent_err=None, abs_err=None):
         self.value = mpf(value)
-        if type(percent_err) is float or type(percent_err) is int:
-            self.delta = mpf(value * percent_err * 0.01)
+        if type(percent_err) in [float, int, str]:
+            print('percent err!')
+            self.delta = mpf(value) * percent_err * 0.01
+        elif type(abs_err) in [float, int, str]:
+            print('abs err! std-ify')
+            self.delta = (mpf(abs_err)/6)**0.5
         else:
             self.delta = mpf(delta)
 
@@ -60,7 +64,7 @@ class ErroredValue(object):
         return ErroredValue(self.value**p, abs(self.value**p) * (self.delta / abs(self.value)))
 
     def __str__(self):
-        return f'{self.value}±{self.delta}'
+        return f'{self.value} ± {self.delta} ({float(self.delta/self.value * 100):.2f}%)'
 
     def __repr__(self):
         return f'<ErroredValue {self.value}±{self.delta} at {hex(id(self))}>'
