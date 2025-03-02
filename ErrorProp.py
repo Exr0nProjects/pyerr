@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 import math
 
 from mpmath import mp, mpf 
@@ -6,15 +7,22 @@ mp.dps = 6
 
 class ErroredValue(object):
     def __init__(self, value, delta=0, percent_err=None, abs_err=None):
-        self.value = mpf(value)
-        if type(percent_err) in [float, int, str]:
-            print('percent err!')
-            self.delta = mpf(value) * percent_err * 0.01
-        elif type(abs_err) in [float, int, str]:
-            print('abs err! std-ify')
-            self.delta = (mpf(abs_err)/6)**0.5
-        else:
-            self.delta = mpf(delta)
+        if isinstance(value, list): # compute mean and std from list
+            from statistics import stdev
+            values = list(value)     # optm: stream
+            self.value = mpf(sum(values) / len(values))
+            self.delta = mpf(stdev(values))
+        else:   # given mean and std
+            self.value = mpf(value)
+
+            if type(percent_err) in [float, int, str]:
+                print('percent err!')
+                self.delta = mpf(value) * percent_err * 0.01
+            elif type(abs_err) in [float, int, str]:
+                print('abs err! std-ify')
+                self.delta = (mpf(abs_err)/6)**0.5
+            else:
+                self.delta = mpf(delta)
 
     def __add__(self, o):
         if type(o) != ErroredValue:
